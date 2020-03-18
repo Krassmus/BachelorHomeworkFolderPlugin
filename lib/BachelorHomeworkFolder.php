@@ -98,7 +98,7 @@ class BachelorHomeworkFolder extends HomeworkFolder
         // We must load the files (FileRefs) directly from the database
         // since files that were added to this folder object after it was
         // created are not included in the file_refs attribute:
-        if ($GLOBALS['perm']->have_studip_perm('tutor', $this->range_id, $GLOBALS['user']->id)) {
+        if ($GLOBALS['perm']->have_studip_perm('dozent', $this->range_id, $GLOBALS['user']->id)) {
             return FileRef::findByFolder_id($this->getId(), "ORDER BY name");
         } else {
             return FileRef::findBySQL("folder_id = ? AND user_id = ? ORDER BY name", [$this->getId(), $GLOBALS['user']->id]);
@@ -113,6 +113,7 @@ class BachelorHomeworkFolder extends HomeworkFolder
 
     public function isFileDownloadable($fileref_or_id, $user_id)
     {
-        return $GLOBALS['perm']->have_studip_perm('tutor', $this->range_id, $GLOBALS['user']->id);
+        return $GLOBALS['perm']->have_perm("root") || ($GLOBALS['perm']->have_studip_perm('dozent', $this->range_id, $GLOBALS['user']->id)
+                && !$GLOBALS['perm']->have_studip_perm('admin', $this->range_id, $GLOBALS['user']->id));
     }
 }
