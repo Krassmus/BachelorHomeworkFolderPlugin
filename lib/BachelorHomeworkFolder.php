@@ -92,4 +92,27 @@ class BachelorHomeworkFolder extends HomeworkFolder
 
         return $fileref;
     }
+
+    public function getFiles()
+    {
+        // We must load the files (FileRefs) directly from the database
+        // since files that were added to this folder object after it was
+        // created are not included in the file_refs attribute:
+        if ($GLOBALS['perm']->have_studip_perm('tutor', $this->range_id, $GLOBALS['user']->id)) {
+            return FileRef::findByFolder_id($this->getId(), "ORDER BY name");
+        } else {
+            return FileRef::findBySQL("folder_id = ? AND user_id = ? ORDER BY name", [$this->getId(), $GLOBALS['user']->id]);
+        }
+
+    }
+
+    public function isReadable($user_id = null)
+    {
+        return true;
+    }
+
+    public function isFileDownloadable($fileref_or_id, $user_id)
+    {
+        return $GLOBALS['perm']->have_studip_perm('tutor', $this->range_id, $GLOBALS['user']->id);
+    }
 }
