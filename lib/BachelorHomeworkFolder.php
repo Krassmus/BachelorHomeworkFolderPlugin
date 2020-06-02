@@ -59,6 +59,40 @@ class BachelorHomeworkFolder extends HomeworkFolder
         $fileref = parent::createFile($file);
         //send an email
         $text = $this->folderdata['data_content']['body'];
+
+
+        $text = preg_replace(
+            "/".preg_quote("{{username}}")."/",
+            $GLOBALS['user']->username,
+            $text
+        );
+        $text = preg_replace(
+            "/".preg_quote("{{email}}")."/i",
+            $GLOBALS['user']->email,
+            $text
+        );
+        $text = preg_replace(
+            "/".preg_quote("{{first_name}}")."/i",
+            $GLOBALS['user']->vorname,
+            $text
+        );
+        $text = preg_replace(
+            "/".preg_quote("{{last_name}}")."/i",
+            $GLOBALS['user']->nachname,
+            $text
+        );
+        foreach (DataField::findBySQL("object_type = 'user'") as $datafield) {
+            $value = DatafieldEntryModel::findOneBySQL("datafield_id = :datafield_id AND range_id = :user_id", [
+                'datafield_id' => $datafield->getId(),
+                'user_id' => $GLOBALS['user']->id
+            ]);
+            $text = preg_replace(
+                "/".preg_quote("{{".$datafield['name']."}}")."/i",
+                $value['content'],
+                $text
+            );
+        }
+
         $text .= "\n\nDateiname: ".$fileref->name."\nEingereicht: ".date("d.m.Y H:i:s");
         $subject = $this->folderdata['data_content']['subject'];
         $emails = preg_split(
@@ -68,12 +102,24 @@ class BachelorHomeworkFolder extends HomeworkFolder
             PREG_SPLIT_NO_EMPTY
         );
         foreach ($emails as $email) {
-            StudipMail::sendMessage(
-                $email,
-                $subject,
-                $text
-            );
+            $mail = new StudipMail();
+            $mail->setSubject($subject);
+            $mail->addRecipient($email);
+            $mail->setBodyText($text);
+            $mail->addStudipAttachment($fileref);
+            $mail->send();
         }
+
+        do {
+            $message_id = md5(uniqid());
+        } while (Message::find($message_id));
+
+        $attachment_folder = MessageFolder::createTopFolder($message_id);
+        FileManager::copyFileRef(
+            $fileref,
+            $attachment_folder,
+            User::findCurrent()
+        );
 
         $messaging = new messaging();
         $messaging->insert_message(
@@ -81,7 +127,7 @@ class BachelorHomeworkFolder extends HomeworkFolder
             get_username(),
             "____%system%____",
             '',
-            '',
+            $message_id,
             '',
             '',
             $subject,
