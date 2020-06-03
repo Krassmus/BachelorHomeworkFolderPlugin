@@ -52,6 +52,9 @@ class BachelorHomeworkFolder extends HomeworkFolder
 
     public function getDescriptionTemplate()
     {
+        if ($GLOBALS['perm']->have_studip_perm("tutor", Context::get()->id)) {
+            PageLayout::addScript($GLOBALS['ABSOLUTE_URI_STUDIP'] . "plugins_packages/data-quest/BachelorHomeworkFolderPlugin/assets/bhf_actionmenu.js");
+        }
     }
 
     public function createFile($file)
@@ -106,7 +109,9 @@ class BachelorHomeworkFolder extends HomeworkFolder
             $mail->setSubject($subject);
             $mail->addRecipient($email);
             $mail->setBodyText($text);
-            $mail->addStudipAttachment($fileref);
+            if (Config::get()->BACHELOR_HOMEWORK_FOLDER_MAIL_ATTACHMENT) {
+                $mail->addStudipAttachment($fileref);
+            }
             $mail->send();
         }
 
@@ -159,7 +164,8 @@ class BachelorHomeworkFolder extends HomeworkFolder
 
     public function isFileDownloadable($fileref_or_id, $user_id)
     {
-        return $GLOBALS['perm']->have_perm("root") || ($GLOBALS['perm']->have_studip_perm('dozent', $this->range_id, $GLOBALS['user']->id)
-                && !$GLOBALS['perm']->have_studip_perm('admin', $this->range_id, $GLOBALS['user']->id));
+        return $GLOBALS['perm']->have_perm("root", $user_id)
+            || ($GLOBALS['perm']->have_studip_perm('dozent', $this->range_id, $user_id)
+                && !$GLOBALS['perm']->have_studip_perm('admin', $this->range_id, $user_id));
     }
 }
