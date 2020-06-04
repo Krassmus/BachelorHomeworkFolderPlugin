@@ -5,7 +5,7 @@ class ForwardController extends PluginController
     public function message_action($fileref_id)
     {
         $fileref = new FileRef($fileref_id);
-        if (!$fileref->isRangeAccessible()) {
+        if (!$fileref->foldertype->isFileDownloadable($fileref_id, $GLOBALS['user']->id)) {
             throw new AccessDeniedException();
         }
 
