@@ -10,7 +10,7 @@ class BachelorHomeworkFolder extends HomeworkFolder
 
     public static function getTypeName()
     {
-        return _('Ordner für Abschlussarbeiten');
+        return _('Ordner für Abschlussarbeiten und Seminararbeiten');
     }
 
     public function isWritable($user_id = null)
@@ -165,7 +165,19 @@ class BachelorHomeworkFolder extends HomeworkFolder
     public function isFileDownloadable($fileref_or_id, $user_id)
     {
         return $GLOBALS['perm']->have_perm("root", $user_id)
-            || ($GLOBALS['perm']->have_studip_perm('dozent', $this->range_id, $user_id)
-                && !$GLOBALS['perm']->have_studip_perm('admin', $this->range_id, $user_id));
+            || ($GLOBALS['perm']->have_studip_perm('dozent', $this->range_id, $user_id));
     }
+
+    public function isFileEditable($fileref_or_id, $user_id)
+    {
+        return $GLOBALS['perm']->have_perm("root")
+            || ($GLOBALS['perm']->have_studip_perm('admin', $this->range_id, $user_id));
+    }
+
+	public function isFileWritable($fileref_or_id, $user_id)
+	{
+        return $GLOBALS['perm']->have_perm("root")
+            || ($GLOBALS['perm']->have_studip_perm('admin', $this->range_id, $user_id));
+    }
+
 }
